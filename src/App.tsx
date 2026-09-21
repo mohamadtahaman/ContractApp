@@ -66,19 +66,18 @@ export default function App() {
     setBatchCodes(batches);
 
     const savedAll = getSavedContracts();
+    // If there is an active verified code in session, keep it, otherwise require entry
     const activeCode = getActiveContractCode();
 
     if (activeCode && savedAll[activeCode]) {
       setContract(savedAll[activeCode]);
       setContractCodeInput(activeCode);
-      setIsCodeVerified(true);
+      setIsCodeVerified(false); // Locked by default on initial entry
     } else {
       const demo = getSampleDemoContract();
       setContract(demo);
       saveContractToStorage(demo);
-      setActiveContractCode(demo.general.contractCode);
-      setContractCodeInput(demo.general.contractCode);
-      setIsCodeVerified(true);
+      setIsCodeVerified(false); // Locked by default
       if (!batches.includes(demo.general.contractCode)) {
         const updated = [demo.general.contractCode, ...batches.slice(0, 9)];
         setBatchCodes(updated);
@@ -298,44 +297,42 @@ export default function App() {
           </div>
 
           <div className="header-controls">
-            {/* مؤشر كود العقد النشط */}
-            <div
-              style={{
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                fontSize: '13px',
-                background: 'rgba(0, 0, 0, 0.3)',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid rgba(212, 175, 55, 0.4)',
-                color: '#fef08a',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>CTR:</span>
-              <span id="active_code_display">{contract.general.contractCode}</span>
-            </div>
+            {/* أزرار التبديل بين تعبئة النموذج وعرض العقد (تتاح بعد التحقق) */}
+            {isCodeVerified && (
+              <>
+                <button
+                  type="button"
+                  className={`nav-pill-btn ${activeTab === 'form-view' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('form-view')}
+                >
+                  <span>✏️</span>
+                  <span>{t.tabForm}</span>
+                </button>
 
-            {/* أزرار التبديل بين تعبئة النموذج وعرض العقد */}
-            <button
-              type="button"
-              className={`nav-pill-btn ${activeTab === 'form-view' ? 'active' : ''}`}
-              onClick={() => setActiveTab('form-view')}
-            >
-              <span>✏️</span>
-              <span>{t.tabForm}</span>
-            </button>
+                <button
+                  type="button"
+                  className={`nav-pill-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('contract-view')}
+                >
+                  <span>📄</span>
+                  <span>{t.tabContract}</span>
+                </button>
 
-            <button
-              type="button"
-              className={`nav-pill-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
-              onClick={() => setActiveTab('contract-view')}
-            >
-              <span>📄</span>
-              <span>{t.tabContract}</span>
-            </button>
+                <button
+                  type="button"
+                  className="nav-pill-btn"
+                  onClick={() => {
+                    setIsCodeVerified(false);
+                    setAlertMsg({ text: 'تم قفل الصفحة وتأمين العقد', type: 'success' });
+                  }}
+                  title="قفل الصفحة / Sperren"
+                  style={{ background: 'rgba(217, 83, 79, 0.25)', borderColor: '#ef4444' }}
+                >
+                  <span>🔒</span>
+                  <span>قفل</span>
+                </button>
+              </>
+            )}
 
             {/* مفتاح تبديل اللغة */}
             <div className="lang-switch">
@@ -365,23 +362,44 @@ export default function App() {
         </div>
       </header>
 
-      {/* شريط الإدارة Admin Bar */}
+      {/* شريط الإدارة Admin Bar (مكان الأكواد الحصري) */}
       {isAdminLoggedIn && (
         <div id="admin-bar" className="admin-bar no-print">
           <div className="admin-header">
-            <span>🔒 <strong>{t.adminTitle}</strong></span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>🔒 <strong>{t.adminTitle}</strong></span>
+              <span
+                style={{
+                  fontFamily: 'monospace',
+                  background: '#22c55e',
+                  color: '#10331e',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                }}
+              >
+                الكود الحالي: {contract.general.contractCode}
+              </span>
+            </div>
             <div className="tabs">
               <button
                 type="button"
                 className={`tab-btn ${activeTab === 'form-view' ? 'active' : ''}`}
-                onClick={() => setActiveTab('form-view')}
+                onClick={() => {
+                  setIsCodeVerified(true);
+                  setActiveTab('form-view');
+                }}
               >
                 {t.tabForm}
               </button>
               <button
                 type="button"
                 className={`tab-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
-                onClick={() => setActiveTab('contract-view')}
+                onClick={() => {
+                  setIsCodeVerified(true);
+                  setActiveTab('contract-view');
+                }}
               >
                 {t.tabContract}
               </button>
@@ -405,7 +423,10 @@ export default function App() {
                 return (
                   <span
                     key={code}
-                    onClick={() => selectBadgeCode(code)}
+                    onClick={() => {
+                      selectBadgeCode(code);
+                      setIsCodeVerified(true);
+                    }}
                     className={`code-badge ${isActive ? 'active-code' : isComplete ? 'used-code' : 'active-code'}`}
                     style={isActive ? { outline: '2px solid #2ecc71', outlineOffset: '2px' } : undefined}
                     title="Klicken zum Laden / اضغط للتحميل"
@@ -420,21 +441,93 @@ export default function App() {
         </div>
       )}
 
-      {/* 1. واجهة تعبئة البيانات Form View */}
-      <div id="form-view" className={`view-container ${activeTab === 'form-view' ? 'block' : 'hidden'}`}>
-        <div className="form-card">
-          <h2 style={{ textAlign: 'center', color: 'var(--primary-color)', margin: '0 0 15px 0', fontSize: '20px', fontWeight: 800 }} id="txt_form_title">
-            {t.formTitle}
-          </h2>
-
-          {alertMsg && (
-            <div
-              id="alertBox"
-              className={`alert-msg ${alertMsg.type === 'success' ? 'alert-msg-success' : 'alert-msg-error'}`}
-            >
-              {alertMsg.text}
+      {/* شاشة الحجب والقفل (Gatekeeper Lockscreen) إذا لم يتم إدخال كود التأكيد */}
+      {!isCodeVerified ? (
+        <div className="max-w-[550px] mx-auto px-4 py-8">
+          <div className="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-[#1a4d2e] text-center">
+            <div className="w-16 h-16 bg-[#f1f6f3] border-2 border-[#1a4d2e] text-[#1a4d2e] rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-sm">
+              🔐
             </div>
-          )}
+            <h2 className="text-xl font-extrabold text-[#1a4d2e] mb-2">
+              بوابة إدخال كود عقد الزواج
+            </h2>
+            <p className="text-sm font-semibold text-[#b8860b] mb-1 font-sans">
+              Vertragszugang & Code-Verifizierung
+            </p>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+              هذه الصفحة محجوبة تلقائياً لحماية خصوصية البيانات. يرجى إدخال كود العقد الممنوح لك من إدارة مركز الرسالة للمتابعة.
+            </p>
+
+            {alertMsg && (
+              <div
+                className={`alert-msg ${alertMsg.type === 'success' ? 'alert-msg-success' : 'alert-msg-error'} mb-4`}
+              >
+                {alertMsg.text}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                verifyContractCode();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <input
+                  type="text"
+                  id="gatekeeperCodeInput"
+                  value={contractCodeInput}
+                  onChange={(e) => setContractCodeInput(e.target.value.toUpperCase())}
+                  placeholder="CTR-XXXXXX"
+                  className="w-full text-center text-lg font-mono font-bold tracking-widest py-3 px-4 rounded-xl border-2 border-slate-300 focus:border-[#1a4d2e] focus:outline-none uppercase bg-slate-50 focus:bg-white transition-all shadow-inner"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#1a4d2e] hover:bg-[#25663f] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                <span>✓</span>
+                <span>تأكيد الكود والدخول (Bestätigen)</span>
+              </button>
+            </form>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+              <span>Arresalah Center Berlin e.V.</span>
+              <button
+                type="button"
+                onClick={() => setIsAdminLoggedIn(!isAdminLoggedIn)}
+                className="hover:text-slate-700 underline cursor-pointer"
+              >
+                {isAdminLoggedIn ? 'إخفاء الإدارة' : 'دخول الإدارة 🔒'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* 1. واجهة تعبئة البيانات Form View */}
+          <div id="form-view" className={`view-container ${activeTab === 'form-view' ? 'block' : 'hidden'}`}>
+            <div className="form-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2 style={{ color: 'var(--primary-color)', margin: 0, fontSize: '20px', fontWeight: 800 }} id="txt_form_title">
+                  {t.formTitle}
+                </h2>
+                <span style={{ fontSize: '12px', background: '#f1f5f9', padding: '4px 10px', borderRadius: '6px', fontFamily: 'monospace', fontWeight: 700, color: '#1a4d2e' }}>
+                  {contract.general.contractCode}
+                </span>
+              </div>
+
+              {alertMsg && (
+                <div
+                  id="alertBox"
+                  className={`alert-msg ${alertMsg.type === 'success' ? 'alert-msg-success' : 'alert-msg-error'}`}
+                >
+                  {alertMsg.text}
+                </div>
+              )}
 
           {/* إدخال كود العقد */}
           <div className="form-group" id="contractCodeGroup">
@@ -1088,6 +1181,8 @@ export default function App() {
           )}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
