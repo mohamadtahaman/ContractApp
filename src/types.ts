@@ -14,6 +14,7 @@ export interface PartyData {
   fullNameArabic: string;
   dateOfBirth: DateOfBirth;
   placeOfBirth: string;
+  motherName?: string;
   nationality: string;
   religion: string;
   maritalStatus?: string; // Single, Divorced, Widowed
