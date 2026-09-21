@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary-color: #1a4d2e;
+    --primary-light: #25663f;
+    --primary-dark: #113620;
+    --success-color: #27ae60;
+    --success-light: #2ecc71;
+    --gold-color: #b8860b;
+    --gold-light: #d4af37;
+    --gold-subtle: #fcf8e3;
+    --stone-paper: #faf8f5;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  [dir="rtl"] {
+    font-family: 'Cairo', 'Amiri', system-ui, sans-serif;
+  }
+
+  .font-amiri {
+    font-family: 'Amiri', serif;
+  }
+
+  .font-cairo {
+    font-family: 'Cairo', sans-serif;
+  }
+}
+
+/* Islamic Geometric & Certificate Borders */
+.islamic-border-frame {
+  border: 3px double #1a4d2e;
+  outline: 1px solid #b8860b;
+  outline-offset: 4px;
+}
+
+.islamic-corner-ornament {
+  background: radial-gradient(circle at center, #d4af37 0%, #b8860b 70%, transparent 100%);
+}
+
+/* Print Optimization for Official A4 Islamic Marriage Certificate */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 6mm 8mm 6mm;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all interactive app elements */
+  nav,
+  header.app-header,
+  .no-print,
+  #top-banner,
+  #party-form-editor,
+  #code-view-container,
+  #radar-progress-widget,
+  #action-bar,
+  footer.app-footer,
+  button {
+    display: none !important;
+  }
+
+  /* Make printable certificate occupy full page */
+  #printable-certificate {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 8mm !important;
+    box-shadow: none !important;
+    border: 2px solid #1a4d2e !important;
+    background-color: #ffffff !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-page-break {
+    page-break-after: always;
+  }
+}
+
+/* Wheel Picker styling */
+.wheel-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a4d2e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+}
+
+[dir="rtl"] .wheel-select {
+  background-position: left 0.75rem center;
+}

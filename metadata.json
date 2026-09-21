@@ -1,0 +1,6 @@
+{
+  "name": "Islamische Eheschließungsurkunde - Arresalah Center Berlin",
+  "description": "Offizielle zweisprachige Islamische Eheschließungsurkunde für das Arresalah Center Berlin mit 5-Parteien-Fortschrittssegmenten, CTR-Code-Generator, Base64-ID-Uploads und druckbarem A4-Zertifikat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
