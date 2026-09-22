@@ -331,197 +331,31 @@ export default function App() {
   const parties = contract.parties;
 
   return (
-    <div className="min-h-screen bg-[#f1f5f3]">
-      {/* الترويسة العلوية الرسمية لمركز الرسالة برلين */}
-      <header className="app-header no-print">
-        <div className="app-header-content">
-          <div className="header-brand">
-            <div className="header-logo-icon">
-              🕌
-            </div>
-            <div className="header-titles">
-              <h1>ARRESALAH CENTER BERLIN e.V.</h1>
-              <p>{t.headerSubtitle}</p>
-            </div>
-          </div>
-
-          <div className="header-controls">
-            {/* أزرار التبديل والمعاينة والطباعة تتاح فقط للإدارة حصرياً */}
-            {isAdminLoggedIn && (
-              <>
-                <button
-                  type="button"
-                  className={`nav-pill-btn ${activeTab === 'form-view' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('form-view')}
-                >
-                  <span>✏️</span>
-                  <span>{t.tabForm}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`nav-pill-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('contract-view')}
-                >
-                  <span>📄</span>
-                  <span>{t.tabContract}</span>
-                </button>
-              </>
-            )}
-
-            {/* مفتاح تبديل اللغة */}
-            <div className="lang-switch">
-              <button
-                type="button"
-                className={`lang-btn ${lang === 'de' ? 'active' : ''}`}
-                onClick={() => setLang('de')}
-              >
-                DE
-              </button>
-              <button
-                type="button"
-                className={`lang-btn ${lang === 'ar' ? 'active' : ''}`}
-                onClick={() => setLang('ar')}
-              >
-                عربي
-              </button>
-              <button
-                type="button"
-                className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
-                onClick={() => setLang('en')}
-              >
-                EN
-              </button>
-            </div>
-
-            {/* أيقونة دخول الإدارة الهادئة والسرية في الهيدر */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isAdminLoggedIn) {
-                  handleAdminLogout();
-                } else {
-                  setAdminPasswordError('');
-                  setAdminPasswordInput('');
-                  setIsAdminModalOpen(true);
-                }
-              }}
-              title={isAdminLoggedIn ? "تسجيل خروج الإدارة" : "دخول إدارة المركز"}
-              style={{
-                background: isAdminLoggedIn ? '#166534' : 'rgba(255, 255, 255, 0.12)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                color: '#fff',
-                padding: '5px 10px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                transition: 'all 0.2s',
-              }}
-            >
-              <span>🔒</span>
-              {isAdminLoggedIn ? (
-                <span style={{ fontSize: '11px', fontWeight: 'bold' }}>خروج الإدارة</span>
-              ) : null}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* شريط الإدارة Admin Bar (مكان الأكواد الحصري) */}
-      {isAdminLoggedIn && (
-        <div id="admin-bar" className="admin-bar no-print">
-          <div className="admin-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span>🔒 <strong>{t.adminTitle}</strong></span>
-              <span
-                style={{
-                  fontFamily: 'monospace',
-                  background: '#22c55e',
-                  color: '#10331e',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                }}
-              >
-                الكود الحالي: {contract.general.contractCode}
-              </span>
-            </div>
-            <div className="tabs">
-              <button
-                type="button"
-                className={`tab-btn ${activeTab === 'form-view' ? 'active' : ''}`}
-                onClick={() => {
-                  setIsCodeVerified(true);
-                  setActiveTab('form-view');
-                }}
-              >
-                {t.tabForm}
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
-                onClick={() => {
-                  setIsCodeVerified(true);
-                  setActiveTab('contract-view');
-                }}
-              >
-                {t.tabContract}
-              </button>
-            </div>
-          </div>
-
-          <div className="contract-mgmt-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{t.activeCodesTitle}</span>
-              <button type="button" className="generate-btn" onClick={generateNewBatch}>
-                {t.generateCodes}
-              </button>
-            </div>
-            <div id="codesContainer" className="codes-list">
-              {batchCodes.map((code) => {
-                const savedAll = getSavedContracts();
-                const ctr = savedAll[code];
-                const isComplete = ctr && isContractFullyCompleted(ctr);
-                const isActive = contract.general.contractCode === code;
-
-                return (
-                  <span
-                    key={code}
-                    onClick={() => {
-                      selectBadgeCode(code);
-                      setIsCodeVerified(true);
-                    }}
-                    className={`code-badge ${isActive ? 'active-code' : isComplete ? 'used-code' : 'active-code'}`}
-                    style={isActive ? { outline: '2px solid #2ecc71', outlineOffset: '2px' } : undefined}
-                    title="Klicken zum Laden / اضغط للتحميل"
-                  >
-                    <span>{code}</span>
-                    <small>{isComplete ? '✓ مكتمل' : 'متاح'}</small>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* شاشة الحجب والدخول بكود العقد */}
+    <div className="min-h-screen bg-[#f4f6f8]">
+      {/* 1. إذا لم يتم إدخال الكود: الواجهة مطابقة 100% للصورة المرفقة */}
       {!isCodeVerified ? (
-        <div className="max-w-[500px] mx-auto px-4 py-12">
-          <div className="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-[#1a4d2e] text-center">
-            <div className="w-16 h-16 bg-[#f1f6f3] border-2 border-[#1a4d2e] text-[#1a4d2e] rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-sm">
-              📜
-            </div>
-            <h2 className="text-xl font-extrabold text-[#1a4d2e] mb-2">
-              {t.gatekeeperTitle}
-            </h2>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              {t.gatekeeperDesc}
-            </p>
+        <div className="min-h-screen bg-[#f4f6f8] flex flex-col items-center justify-start pt-8 sm:pt-14 px-4">
+          {/* شريط اختيار اللغة العلوي المطابق للصورة */}
+          <div className="w-full max-w-[460px] flex items-center justify-end gap-2 mb-6">
+            <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+              <span className="text-sky-500">🌐</span> {t.languageLabel}
+            </span>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Language)}
+              className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm focus:outline-none focus:ring-1 focus:ring-[#1a4d2e] cursor-pointer"
+            >
+              <option value="de">Deutsch (الألمانية)</option>
+              <option value="ar">العربية (Arabisch)</option>
+              <option value="en">English (الإنجليزية)</option>
+            </select>
+          </div>
+
+          {/* البطاقة البيضاء المركزية المطابقة للصورة المرفقة */}
+          <div className="w-full max-w-[460px] bg-white rounded-2xl shadow-sm border border-slate-100 p-8 sm:p-10 text-center">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1a4d2e] mb-6">
+              {t.gatekeeperCardTitle}
+            </h1>
 
             {alertMsg && (
               <div
@@ -536,36 +370,239 @@ export default function App() {
                 e.preventDefault();
                 verifyContractCode();
               }}
-              className="space-y-4"
+              className="text-left"
+              dir={lang === 'ar' ? 'rtl' : 'ltr'}
             >
-              <div>
+              <label
+                htmlFor="gatekeeperCodeInput"
+                className="block text-sm font-semibold text-slate-800 mb-2"
+              >
+                {t.gatekeeperCodeLabel} <span className="text-red-500">*</span>
+              </label>
+
+              <div className="flex gap-2 items-center">
                 <input
                   type="text"
                   id="gatekeeperCodeInput"
                   value={contractCodeInput}
                   onChange={(e) => setContractCodeInput(e.target.value.toUpperCase())}
                   placeholder={t.gatekeeperPlaceholder}
-                  className="w-full text-center text-lg font-mono font-bold tracking-widest py-3 px-4 rounded-xl border-2 border-slate-300 focus:border-[#1a4d2e] focus:outline-none uppercase bg-slate-50 focus:bg-white transition-all shadow-inner"
+                  className="flex-1 min-w-0 px-4 py-2.5 rounded-lg border border-slate-300 text-sm font-semibold uppercase tracking-wider focus:outline-none focus:border-[#1a4d2e] focus:ring-1 focus:ring-[#1a4d2e] bg-white"
                   required
                 />
+                <button
+                  type="submit"
+                  className="bg-[#1a4d2e] hover:bg-[#25663f] text-white font-bold px-6 py-2.5 rounded-lg text-sm transition-all shadow-sm cursor-pointer whitespace-nowrap"
+                >
+                  {t.gatekeeperBtn}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#1a4d2e] hover:bg-[#25663f] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>✓</span>
-                <span>{t.gatekeeperBtn}</span>
-              </button>
             </form>
+          </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-400">
-              <span>{t.footerText}</span>
-            </div>
+          {/* رابط دخول الإدارة في الأسفل مطابق تماماً للصورة المرفقة */}
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setAdminPasswordError('');
+                setAdminPasswordInput('');
+                setIsAdminModalOpen(true);
+              }}
+              className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              Admin Login 🔒 (دخول الإدارة)
+            </button>
           </div>
         </div>
       ) : (
         <>
+          {/* الترويسة العلوية الرسمية لمركز الرسالة برلين (تظهر فقط بعد إدخال كود العقد) */}
+          <header className="app-header no-print">
+            <div className="app-header-content">
+              <div className="header-brand">
+                <div className="header-logo-icon">
+                  🕌
+                </div>
+                <div className="header-titles">
+                  <h1>ARRESALAH CENTER BERLIN e.V.</h1>
+                  <p>{t.headerSubtitle}</p>
+                </div>
+              </div>
+
+              <div className="header-controls">
+                {/* أزرار التبديل والمعاينة والطباعة تتاح فقط للإدارة حصرياً */}
+                {isAdminLoggedIn && (
+                  <>
+                    <button
+                      type="button"
+                      className={`nav-pill-btn ${activeTab === 'form-view' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('form-view')}
+                    >
+                      <span>✏️</span>
+                      <span>{t.tabForm}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`nav-pill-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('contract-view')}
+                    >
+                      <span>📄</span>
+                      <span>{t.tabContract}</span>
+                    </button>
+                  </>
+                )}
+
+                {/* مفتاح تبديل اللغة */}
+                <div className="lang-switch">
+                  <button
+                    type="button"
+                    className={`lang-btn ${lang === 'de' ? 'active' : ''}`}
+                    onClick={() => setLang('de')}
+                  >
+                    DE
+                  </button>
+                  <button
+                    type="button"
+                    className={`lang-btn ${lang === 'ar' ? 'active' : ''}`}
+                    onClick={() => setLang('ar')}
+                  >
+                    عربي
+                  </button>
+                  <button
+                    type="button"
+                    className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+                    onClick={() => setLang('en')}
+                  >
+                    EN
+                  </button>
+                </div>
+
+                {/* زر قفل العقد والخروج */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCodeVerified(false);
+                    setAlertMsg({ text: 'تم قفل العقد والعودة لشاشة الدخول', type: 'success' });
+                  }}
+                  title="قفل العقد والعودة للبوابة"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <span>🔒</span>
+                  <span>قفل</span>
+                </button>
+
+                {/* أيقونة دخول/خروج الإدارة في الهيدر */}
+                {isAdminLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={handleAdminLogout}
+                    title="تسجيل خروج الإدارة"
+                    style={{
+                      background: '#166534',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      color: '#fff',
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <span>🛡️</span>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold' }}>خروج الإدارة</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          {/* شريط الإدارة Admin Bar (مكان توليد ورؤية الأكواد الحصري) */}
+          {isAdminLoggedIn && (
+            <div id="admin-bar" className="admin-bar no-print">
+              <div className="admin-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span>🔒 <strong>{t.adminTitle}</strong></span>
+                  <span
+                    style={{
+                      fontFamily: 'monospace',
+                      background: '#22c55e',
+                      color: '#10331e',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                    }}
+                  >
+                    الكود الحالي: {contract.general.contractCode}
+                  </span>
+                </div>
+                <div className="tabs">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === 'form-view' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('form-view')}
+                  >
+                    {t.tabForm}
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === 'contract-view' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('contract-view')}
+                  >
+                    {t.tabContract}
+                  </button>
+                </div>
+              </div>
+
+              <div className="contract-mgmt-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{t.activeCodesTitle}</span>
+                  <button type="button" className="generate-btn" onClick={generateNewBatch}>
+                    {t.generateCodes}
+                  </button>
+                </div>
+                <div id="codesContainer" className="codes-list">
+                  {batchCodes.map((code) => {
+                    const savedAll = getSavedContracts();
+                    const ctr = savedAll[code];
+                    const isComplete = ctr && isContractFullyCompleted(ctr);
+                    const isActive = contract.general.contractCode === code;
+
+                    return (
+                      <span
+                        key={code}
+                        onClick={() => {
+                          selectBadgeCode(code);
+                        }}
+                        className={`code-badge ${isActive ? 'active-code' : isComplete ? 'used-code' : 'active-code'}`}
+                        style={isActive ? { outline: '2px solid #2ecc71', outlineOffset: '2px' } : undefined}
+                        title="Klicken zum Laden / اضغط للتحميل"
+                      >
+                        <span>{code}</span>
+                        <small>{isComplete ? '✓ مكتمل' : 'متاح'}</small>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 1. واجهة تعبئة البيانات Form View */}
           <div id="form-view" className={`view-container ${activeTab === 'form-view' ? 'block' : 'hidden'}`}>
             <div className="form-card">
@@ -1143,27 +1180,30 @@ export default function App() {
               )}
               <div className="box-title">Ehemann / الزوج</div>
               <div className="field-row">
+                <span className="field-label">Name / الاسم:</span>{' '}
                 <strong id="husband_name_de">{parties.husband?.fullName || '--'}</strong>
-              </div>
-              <div className="field-row" style={{ color: '#555' }} id="husband_name_ar">
-                {parties.husband?.fullNameArabic || '--'}
+                {parties.husband?.fullNameArabic && (
+                  <span style={{ color: '#475569', marginLeft: '6px', marginRight: '6px' }} id="husband_name_ar">
+                    ({parties.husband.fullNameArabic})
+                  </span>
+                )}
               </div>
               <div className="field-row">
-                <span className="field-label">Geburtsdatum, Ort:</span>{' '}
+                <span className="field-label">Geburtsdatum & -ort / تاريخ ومكان الميلاد:</span>{' '}
                 <span id="husband_birth">
                   {parties.husband?.dateOfBirth ? `${parties.husband.dateOfBirth.day}.${parties.husband.dateOfBirth.month}.${parties.husband.dateOfBirth.year}` : '--'}, {parties.husband?.placeOfBirth || '--'}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Mutter:</span>{' '}
+                <span className="field-label">Name der Mutter / اسم الأم:</span>{' '}
                 <span id="husband_mother">{parties.husband?.motherName || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Ausweis-Nr:</span>{' '}
+                <span className="field-label">Ausweis- / Pass-Nr / رقم الهوية أو الجواز:</span>{' '}
                 <span id="husband_id">{parties.husband?.idNumber || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Anschrift:</span>{' '}
+                <span className="field-label">Anschrift / العنوان ومحل الإقامة:</span>{' '}
                 <span id="husband_address">{parties.husband?.address || '--'}</span>
               </div>
             </div>
@@ -1183,27 +1223,30 @@ export default function App() {
               )}
               <div className="box-title">Ehefrau / الزوجة</div>
               <div className="field-row">
+                <span className="field-label">Name / الاسم:</span>{' '}
                 <strong id="wife_name_de">{parties.wife?.fullName || '--'}</strong>
-              </div>
-              <div className="field-row" style={{ color: '#555' }} id="wife_name_ar">
-                {parties.wife?.fullNameArabic || '--'}
+                {parties.wife?.fullNameArabic && (
+                  <span style={{ color: '#475569', marginLeft: '6px', marginRight: '6px' }} id="wife_name_ar">
+                    ({parties.wife.fullNameArabic})
+                  </span>
+                )}
               </div>
               <div className="field-row">
-                <span className="field-label">Geburtsdatum, Ort:</span>{' '}
+                <span className="field-label">Geburtsdatum & -ort / تاريخ ومكان الميلاد:</span>{' '}
                 <span id="wife_birth">
                   {parties.wife?.dateOfBirth ? `${parties.wife.dateOfBirth.day}.${parties.wife.dateOfBirth.month}.${parties.wife.dateOfBirth.year}` : '--'}, {parties.wife?.placeOfBirth || '--'}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Mutter:</span>{' '}
+                <span className="field-label">Name der Mutter / اسم الأم:</span>{' '}
                 <span id="wife_mother">{parties.wife?.motherName || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Ausweis-Nr:</span>{' '}
+                <span className="field-label">Ausweis- / Pass-Nr / رقم الهوية أو الجواز:</span>{' '}
                 <span id="wife_id">{parties.wife?.idNumber || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Anschrift:</span>{' '}
+                <span className="field-label">Anschrift / العنوان ومحل الإقامة:</span>{' '}
                 <span id="wife_address">{parties.wife?.address || '--'}</span>
               </div>
             </div>
@@ -1212,34 +1255,43 @@ export default function App() {
           {/* المهر والولي */}
           <div className="grid-2">
             <div className="section-box">
-              <div className="box-title">Brautgabe (Mahr) / الصداق المسمى</div>
-              <div className="field-row" style={{ fontSize: '13px', paddingTop: '8px' }} id="doc_mahr">
-                <strong>Sofort (المعجل):</strong> {contract.dowry.promptAmount} {contract.dowry.promptCurrency} (empfangen / مقبوض)
-                <br />
-                <span style={{ fontSize: '11px', color: '#555' }}>
-                  <strong>Aufgeschoben (المؤجل):</strong> {contract.dowry.deferredAmount} {contract.dowry.deferredCurrency} ({contract.dowry.deferredDueCondition})
-                </span>
+              <div className="box-title">Brautgabe (Mahr) / الصداق المسمى (المهر)</div>
+              <div className="field-row" style={{ fontSize: '12px', paddingTop: '6px' }} id="doc_mahr">
+                <div>
+                  <span className="field-label">Sofort (empfangen) / المعجل (مقبوض):</span>{' '}
+                  <strong>{contract.dowry.promptAmount || '0'} {contract.dowry.promptCurrency}</strong>
+                </div>
+                <div style={{ marginTop: '4px' }}>
+                  <span className="field-label">Aufgeschoben / المؤجل:</span>{' '}
+                  <strong>{contract.dowry.deferredAmount || '0'} {contract.dowry.deferredCurrency}</strong>{' '}
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>({contract.dowry.deferredDueCondition})</span>
+                </div>
               </div>
             </div>
 
             <div className="section-box">
               <div className="box-title">Vertreter der Braut (Waliy) / الولي الشرعي</div>
               <div className="field-row">
-                <strong id="waliy_name_de">{parties.guardian?.fullName || '--'}</strong> (
-                <span id="waliy_name_ar">{parties.guardian?.fullNameArabic || '--'}</span>)
+                <span className="field-label">Name / الاسم:</span>{' '}
+                <strong id="waliy_name_de">{parties.guardian?.fullName || '--'}</strong>
+                {parties.guardian?.fullNameArabic && (
+                  <span style={{ color: '#475569', marginLeft: '6px', marginRight: '6px' }} id="waliy_name_ar">
+                    ({parties.guardian.fullNameArabic})
+                  </span>
+                )}
               </div>
               <div className="field-row">
-                <span className="field-label">Geburtsdatum, Ort:</span>{' '}
+                <span className="field-label">Geburtsdatum & -ort / تاريخ ومكان الميلاد:</span>{' '}
                 <span id="waliy_birth">
                   {parties.guardian?.dateOfBirth ? `${parties.guardian.dateOfBirth.day}.${parties.guardian.dateOfBirth.month}.${parties.guardian.dateOfBirth.year}` : '--'}, {parties.guardian?.placeOfBirth || '--'}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Ausweis-Nr:</span>{' '}
+                <span className="field-label">Ausweis- / Pass-Nr / رقم الهوية أو الجواز:</span>{' '}
                 <span id="waliy_id">{parties.guardian?.idNumber || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Anschrift:</span>{' '}
+                <span className="field-label">Anschrift / العنوان ومحل الإقامة:</span>{' '}
                 <span id="waliy_address">{parties.guardian?.address || '--'}</span>
               </div>
             </div>
@@ -1250,21 +1302,26 @@ export default function App() {
             <div className="section-box">
               <div className="box-title">Zeuge 1 / الشاهد الأول</div>
               <div className="field-row">
-                <strong id="w1_name_de">{parties.witness1?.fullName || '--'}</strong> (
-                <span id="w1_name_ar">{parties.witness1?.fullNameArabic || '--'}</span>)
+                <span className="field-label">Name / الاسم:</span>{' '}
+                <strong id="w1_name_de">{parties.witness1?.fullName || '--'}</strong>
+                {parties.witness1?.fullNameArabic && (
+                  <span style={{ color: '#475569', marginLeft: '6px', marginRight: '6px' }} id="w1_name_ar">
+                    ({parties.witness1.fullNameArabic})
+                  </span>
+                )}
               </div>
               <div className="field-row">
-                <span className="field-label">Geburtsdatum, Ort:</span>{' '}
+                <span className="field-label">Geburtsdatum & -ort / تاريخ ومكان الميلاد:</span>{' '}
                 <span id="w1_birth">
                   {parties.witness1?.dateOfBirth ? `${parties.witness1.dateOfBirth.day}.${parties.witness1.dateOfBirth.month}.${parties.witness1.dateOfBirth.year}` : '--'}, {parties.witness1?.placeOfBirth || '--'}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Ausweis-Nr:</span>{' '}
+                <span className="field-label">Ausweis- / Pass-Nr / رقم الهوية أو الجواز:</span>{' '}
                 <span id="w1_id">{parties.witness1?.idNumber || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Anschrift:</span>{' '}
+                <span className="field-label">Anschrift / العنوان ومحل الإقامة:</span>{' '}
                 <span id="w1_address">{parties.witness1?.address || '--'}</span>
               </div>
             </div>
@@ -1272,21 +1329,26 @@ export default function App() {
             <div className="section-box">
               <div className="box-title">Zeuge 2 / الشاهد الثاني</div>
               <div className="field-row">
-                <strong id="w2_name_de">{parties.witness2?.fullName || '--'}</strong> (
-                <span id="w2_name_ar">{parties.witness2?.fullNameArabic || '--'}</span>)
+                <span className="field-label">Name / الاسم:</span>{' '}
+                <strong id="w2_name_de">{parties.witness2?.fullName || '--'}</strong>
+                {parties.witness2?.fullNameArabic && (
+                  <span style={{ color: '#475569', marginLeft: '6px', marginRight: '6px' }} id="w2_name_ar">
+                    ({parties.witness2.fullNameArabic})
+                  </span>
+                )}
               </div>
               <div className="field-row">
-                <span className="field-label">Geburtsdatum, Ort:</span>{' '}
+                <span className="field-label">Geburtsdatum & -ort / تاريخ ومكان الميلاد:</span>{' '}
                 <span id="w2_birth">
                   {parties.witness2?.dateOfBirth ? `${parties.witness2.dateOfBirth.day}.${parties.witness2.dateOfBirth.month}.${parties.witness2.dateOfBirth.year}` : '--'}, {parties.witness2?.placeOfBirth || '--'}
                 </span>
               </div>
               <div className="field-row">
-                <span className="field-label">Ausweis-Nr:</span>{' '}
+                <span className="field-label">Ausweis- / Pass-Nr / رقم الهوية أو الجواز:</span>{' '}
                 <span id="w2_id">{parties.witness2?.idNumber || '--'}</span>
               </div>
               <div className="field-row">
-                <span className="field-label">Anschrift:</span>{' '}
+                <span className="field-label">Anschrift / العنوان ومحل الإقامة:</span>{' '}
                 <span id="w2_address">{parties.witness2?.address || '--'}</span>
               </div>
             </div>
@@ -1297,33 +1359,35 @@ export default function App() {
             {t.declaration}
           </div>
 
-          {/* التواقيع والختم */}
+          {/* التواقيع وخاتم المركز - تم إزالة الدائرة تماماً والاكتفاء بكلمة خاتم المركز */}
           <div className="signatures-row">
             <div className="sig-box">
-              <div>Unterschrift Ehemann</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Unterschrift Ehemann</div>
               <div style={{ fontWeight: 'bold' }}>توقيع الزوج</div>
             </div>
             <div className="sig-box">
-              <div>Unterschrift Ehefrau</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Unterschrift Ehefrau</div>
               <div style={{ fontWeight: 'bold' }}>توقيع الزوجة</div>
             </div>
             <div className="sig-box">
-              <div>Unterschrift Vormund (Waliy)</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Unterschrift Vormund (Waliy)</div>
               <div style={{ fontWeight: 'bold' }}>توقيع الولي</div>
             </div>
             <div className="sig-box" style={{ marginTop: '15px' }}>
-              <div>Unterschrift Zeuge 1</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Unterschrift Zeuge 1</div>
               <div style={{ fontWeight: 'bold' }}>توقيع الشاهد الأول</div>
             </div>
             <div className="sig-box" style={{ marginTop: '15px' }}>
-              <div>Unterschrift Zeuge 2</div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Unterschrift Zeuge 2</div>
               <div style={{ fontWeight: 'bold' }}>توقيع الشاهد الثاني</div>
             </div>
             <div className="sig-box" style={{ marginTop: '15px' }}>
-              <div style={{ border: '2px dashed #1a4d2e', width: '55px', height: '55px', borderRadius: '50%', margin: '0 auto 4px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#1a4d2e', fontWeight: 'bold' }}>
-                SIEGEL
+              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+                Imam des Zentrums
               </div>
-              <div style={{ fontWeight: 'bold', color: '#1a4d2e' }}>Imam & Siegel (الختم الرسمي)</div>
+              <div style={{ fontWeight: 'bold', color: '#1a4d2e', fontSize: '14px', paddingTop: '8px', borderTop: '1px solid #cbd5e1' }}>
+                خاتم المركز
+              </div>
             </div>
           </div>
 
@@ -1365,6 +1429,66 @@ export default function App() {
       </div>
       )}
       </>
+      )}
+
+      {/* نافذة تسجيل دخول الإدارة بكلمة المرور */}
+      {isAdminModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-[400px] w-full shadow-2xl border border-slate-200 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 bg-emerald-50 text-emerald-800 rounded-xl flex items-center justify-center text-2xl mx-auto mb-3">
+              🔒
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1">
+              تسجيل دخول إدارة المركز
+            </h3>
+            <p className="text-xs text-slate-500 mb-5">
+              Admin Login • Bitte Administrator-Passwort eingeben
+            </p>
+
+            {adminPasswordError && (
+              <div className="bg-red-50 text-red-700 text-xs py-2 px-3 rounded-lg border border-red-200 mb-4 font-semibold">
+                {adminPasswordError}
+              </div>
+            )}
+
+            <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={adminPasswordInput}
+                  onChange={(e) => {
+                    setAdminPasswordInput(e.target.value);
+                    setAdminPasswordError('');
+                  }}
+                  placeholder="كلمة المرور / Passwort"
+                  className="w-full text-center px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-[#1a4d2e]"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAdminModalOpen(false);
+                    setAdminPasswordInput('');
+                    setAdminPasswordError('');
+                  }}
+                  className="flex-1 py-2.5 px-4 rounded-lg border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                >
+                  إلغاء (Abbrechen)
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-lg bg-[#1a4d2e] hover:bg-[#25663f] text-white text-xs font-bold shadow-sm cursor-pointer"
+                >
+                  دخول (Einloggen)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
