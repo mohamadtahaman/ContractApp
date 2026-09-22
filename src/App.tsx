@@ -21,6 +21,9 @@ import {
 export default function App() {
   const [lang, setLang] = useState<Language>('de');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [adminPasswordError, setAdminPasswordError] = useState('');
   const [activeTab, setActiveTab] = useState<'form-view' | 'contract-view'>('form-view');
 
   // Contract Code & Verification
@@ -66,7 +69,6 @@ export default function App() {
     setBatchCodes(batches);
 
     const savedAll = getSavedContracts();
-    // If there is an active verified code in session, keep it, otherwise require entry
     const activeCode = getActiveContractCode();
 
     if (activeCode && savedAll[activeCode]) {
@@ -106,7 +108,7 @@ export default function App() {
     if (selectedRole === 'husband' || selectedRole === 'wife' || selectedRole === 'guardian') {
       setInputMahr(contract.dowry.promptAmount ? `${contract.dowry.promptAmount} ${contract.dowry.promptCurrency}` : '');
     }
-  }, [selectedRole, contract]);
+  }, [selectedRole]);
 
   // File Upload to Base64 with compression
   const handleFileUpload = (
@@ -118,26 +120,57 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (!result) return;
+
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = target === 'profile' ? 300 : 800;
-        const scale = Math.min(1, MAX_WIDTH / img.width);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
+        const MAX_WIDTH = target === 'profile' ? 320 : 900;
+        const scale = Math.min(1, MAX_WIDTH / (img.width || 1));
+        canvas.width = (img.width || 1) * scale;
+        canvas.height = (img.height || 1) * scale;
 
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          
           if (target === 'profile') setProfilePicBase64(dataUrl);
           if (target === 'front') setIdFrontBase64(dataUrl);
           if (target === 'back') setIdBackBase64(dataUrl);
+
+          setAlertMsg({
+            text: `✓ Bild erfolgreich geladen / تم رفع الصورة بنجاح`,
+            type: 'success',
+          });
         }
       };
-      img.src = event.target?.result as string;
+      img.src = result;
     };
     reader.readAsDataURL(file);
+  };
+
+  // Handle Admin Login with Password
+  const handleAdminLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = adminPasswordInput.trim();
+    // Default admin passwords
+    if (trimmed === 'admin123' || trimmed === 'Arresalah2026' || trimmed === '123456') {
+      setIsAdminLoggedIn(true);
+      setIsAdminModalOpen(false);
+      setAdminPasswordInput('');
+      setAdminPasswordError('');
+      setAlertMsg({ text: '✓ Willkommen in der Administration / تم الدخول إلى لوحة الإدارة بنجاح', type: 'success' });
+    } else {
+      setAdminPasswordError('كلمة المرور غير صحيحة! (Falsches Passwort)');
+    }
+  };
+
+  // Admin Logout
+  const handleAdminLogout = () => {
+    setIsAdminLoggedIn(false);
+    setAlertMsg({ text: 'تم تسجيل الخروج من لوحة الإدارة', type: 'success' });
   };
 
   // Verify Contract Code
@@ -173,16 +206,22 @@ export default function App() {
   // Save Form Data
   const saveData = () => {
     if (!selectedRole) {
-      setAlertMsg({ text: t.fillRequired, type: 'error' });
+      setAlertMsg({ text: 'يرجى اختيار أحد الأطراف من الدائرة الخماسية أولاً', type: 'error' });
       return;
     }
 
-    if (!inputNameDe.trim() || !inputBirthPlace.trim() || !inputId.trim() || !inputAddress.trim()) {
-      setAlertMsg({ text: t.fillRequired, type: 'error' });
+    if (!inputNameDe.trim() && !inputNameAr.trim()) {
+      setAlertMsg({ text: 'يرجى إدخال اسم الطرف على الأقل لحفظ البيانات / Bitte Namen eingeben', type: 'error' });
       return;
     }
 
     const currentParty = contract.parties[selectedRole] || createEmptyParty(selectedRole);
+
+    const isComplete = Boolean(
+      (inputNameDe.trim() || inputNameAr.trim()) &&
+      inputBirthPlace.trim() &&
+      inputId.trim()
+    );
 
     const updatedParty: PartyData = {
       ...currentParty,
@@ -201,7 +240,7 @@ export default function App() {
       photoBase64: profilePicBase64 || currentParty.photoBase64,
       idFrontBase64: idFrontBase64 || currentParty.idFrontBase64,
       idBackBase64: idBackBase64 || currentParty.idBackBase64,
-      isCompleted: true,
+      isCompleted: isComplete,
       completedAt: new Date().toISOString(),
     };
 
@@ -223,9 +262,19 @@ export default function App() {
 
     setContract(updatedContract);
     saveContractToStorage(updatedContract);
-    setAlertMsg({ text: t.successSaved, type: 'success' });
 
-    // Suggest next uncompleted role
+    const roleNameAr = 
+      selectedRole === 'husband' ? 'الزوج' : 
+      selectedRole === 'wife' ? 'الزوجة' : 
+      selectedRole === 'guardian' ? 'الولي' : 
+      selectedRole === 'witness1' ? 'الشاهد الأول' : 'الشاهد الثاني';
+
+    setAlertMsg({ 
+      text: `✓ تم حفظ بيانات (${roleNameAr}) والصور المرفقة وتحديث العقد بنجاح!`, 
+      type: 'success' 
+    });
+
+    // Auto switch to next uncompleted role
     const rolesOrder: PartyRole[] = ['husband', 'wife', 'guardian', 'witness1', 'witness2'];
     const nextUncompleted = rolesOrder.find(
       (r) => r !== selectedRole && !updatedContract.parties[r]?.isCompleted
@@ -297,8 +346,8 @@ export default function App() {
           </div>
 
           <div className="header-controls">
-            {/* أزرار التبديل بين تعبئة النموذج وعرض العقد (تتاح بعد التحقق) */}
-            {isCodeVerified && (
+            {/* أزرار التبديل والمعاينة والطباعة تتاح فقط للإدارة حصرياً */}
+            {isAdminLoggedIn && (
               <>
                 <button
                   type="button"
@@ -316,20 +365,6 @@ export default function App() {
                 >
                   <span>📄</span>
                   <span>{t.tabContract}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="nav-pill-btn"
-                  onClick={() => {
-                    setIsCodeVerified(false);
-                    setAlertMsg({ text: 'تم قفل الصفحة وتأمين العقد', type: 'success' });
-                  }}
-                  title="قفل الصفحة / Sperren"
-                  style={{ background: 'rgba(217, 83, 79, 0.25)', borderColor: '#ef4444' }}
-                >
-                  <span>🔒</span>
-                  <span>قفل</span>
                 </button>
               </>
             )}
@@ -358,6 +393,39 @@ export default function App() {
                 EN
               </button>
             </div>
+
+            {/* أيقونة دخول الإدارة الهادئة والسرية في الهيدر */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isAdminLoggedIn) {
+                  handleAdminLogout();
+                } else {
+                  setAdminPasswordError('');
+                  setAdminPasswordInput('');
+                  setIsAdminModalOpen(true);
+                }
+              }}
+              title={isAdminLoggedIn ? "تسجيل خروج الإدارة" : "دخول إدارة المركز"}
+              style={{
+                background: isAdminLoggedIn ? '#166534' : 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#fff',
+                padding: '5px 10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <span>🔒</span>
+              {isAdminLoggedIn ? (
+                <span style={{ fontSize: '11px', fontWeight: 'bold' }}>خروج الإدارة</span>
+              ) : null}
+            </button>
           </div>
         </div>
       </header>
@@ -494,15 +562,8 @@ export default function App() {
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
-              <span>Arresalah Center Berlin e.V.</span>
-              <button
-                type="button"
-                onClick={() => setIsAdminLoggedIn(!isAdminLoggedIn)}
-                className="hover:text-slate-700 underline cursor-pointer"
-              >
-                {isAdminLoggedIn ? 'إخفاء الإدارة' : 'دخول الإدارة 🔒'}
-              </button>
+            <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-400">
+              <span>Arresalah Center Berlin e.V. • Gerichtstraße 38, 13347 Berlin</span>
             </div>
           </div>
         </div>
@@ -511,13 +572,13 @@ export default function App() {
           {/* 1. واجهة تعبئة البيانات Form View */}
           <div id="form-view" className={`view-container ${activeTab === 'form-view' ? 'block' : 'hidden'}`}>
             <div className="form-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <div style={{ marginBottom: '15px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
                 <h2 style={{ color: 'var(--primary-color)', margin: 0, fontSize: '20px', fontWeight: 800 }} id="txt_form_title">
                   {t.formTitle}
                 </h2>
-                <span style={{ fontSize: '12px', background: '#f1f5f9', padding: '4px 10px', borderRadius: '6px', fontFamily: 'monospace', fontWeight: 700, color: '#1a4d2e' }}>
-                  {contract.general.contractCode}
-                </span>
+                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+                  يرجى النقر على أي من الأطراف في الدائرة أدناه لإدخال بياناته ورفع صوره الشخصية ومستنداته
+                </p>
               </div>
 
               {alertMsg && (
@@ -529,43 +590,8 @@ export default function App() {
                 </div>
               )}
 
-          {/* إدخال كود العقد */}
-          <div className="form-group" id="contractCodeGroup">
-            <label id="lbl_contract_code">
-              {t.contractCodeLabel} <span style={{ color: 'red' }}>*</span>
-            </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <input
-                type="text"
-                id="contractCodeInput"
-                value={contractCodeInput}
-                onChange={(e) => setContractCodeInput(e.target.value.toUpperCase())}
-                placeholder="z.B. CTR-8X2K9P"
-                style={{ textTransform: 'uppercase' }}
-              />
-              <button
-                type="button"
-                onClick={verifyContractCode}
-                id="btn_verify_code"
-                style={{
-                  padding: '0 20px',
-                  background: 'var(--primary-color)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {t.verifyCodeBtn}
-              </button>
-            </div>
-          </div>
-
-          {/* النموذج الرئيسي بعد تأكيد الكود */}
-          {isCodeVerified && (
-            <div id="mainFormBody">
+              {/* النموذج الرئيسي بعد تأكيد الكود */}
+              <div id="mainFormBody">
               {/* الدائرة الخماسية التفاعلية مرئية للجميع */}
               <div className="progress-circle-wrapper">
                 <h4 id="lbl_circle_title">{t.circleTitle}</h4>
@@ -841,6 +867,37 @@ export default function App() {
                     </div>
                   )}
 
+                  {/* الصورة الشخصية للزوج والزوجة */}
+                  {(selectedRole === 'husband' || selectedRole === 'wife') && (
+                    <div className="form-group">
+                      <label id="lbl_profile_pic">
+                        صورة شخصية (Passfoto - اختیاري):
+                      </label>
+                      <input
+                        type="file"
+                        id="inputProfilePic"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, 'profile')}
+                      />
+                      {profilePicBase64 && (
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img
+                            src={profilePicBase64}
+                            alt="Profile"
+                            style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #1a4d2e' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setProfilePicBase64(undefined)}
+                            style={{ background: '#fee2e2', color: '#b91c1c', border: '1px solid #f87171', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', cursor: 'pointer' }}
+                          >
+                            حذف الصورة ✕
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label id="lbl_id_front">
                       {t.idFront} <span style={{ color: 'red' }}>*</span>
@@ -852,8 +909,24 @@ export default function App() {
                       onChange={(e) => handleFileUpload(e, 'front')}
                     />
                     {idFrontBase64 && (
-                      <div className="upload-status" style={{ color: 'var(--success-color)' }}>
-                        ✓ Datei geladen (تم تحميل الوجه الأمامي)
+                      <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <img
+                          src={idFrontBase64}
+                          alt="ID Front Preview"
+                          style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>
+                            ✓ تم تحميل صورة الوجه الأمامي
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIdFrontBase64(undefined)}
+                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '11px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                          >
+                            إلغاء الصورة ✕
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -869,8 +942,24 @@ export default function App() {
                       onChange={(e) => handleFileUpload(e, 'back')}
                     />
                     {idBackBase64 && (
-                      <div className="upload-status" style={{ color: 'var(--success-color)' }}>
-                        ✓ Datei geladen (تم تحميل الجهة الخلفية)
+                      <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <img
+                          src={idBackBase64}
+                          alt="ID Back Preview"
+                          style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>
+                            ✓ تم تحميل صورة الوجه الخلفي
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIdBackBase64(undefined)}
+                            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '11px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                          >
+                            إلغاء الصورة ✕
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -886,41 +975,138 @@ export default function App() {
                 </div>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* رابط دخول الإدارة أسفل الصفحة */}
-        <div id="admin-login-link" style={{ textAlign: 'center', marginTop: '25px' }}>
-          <button
-            type="button"
-            onClick={() => setIsAdminLoggedIn(!isAdminLoggedIn)}
+        {/* تذييل الصفحة الرسمي النظيف */}
+        <footer style={{ textAlign: 'center', marginTop: '35px', padding: '16px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '11px' }}>
+          <div>Islamische Eheschließungsurkunde • Arresalah Center Berlin e.V.</div>
+          <div style={{ marginTop: '2px' }}>Gerichtstraße 38, 13347 Berlin • Alle Rechte vorbehalten</div>
+        </footer>
+
+        {/* نافذة تسجيل دخول الإدارة بكلمة المرور Admin Password Modal */}
+        {isAdminModalOpen && (
+          <div
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#888',
-              fontSize: '12px',
-              textDecoration: 'underline',
-              cursor: 'pointer',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '16px',
             }}
+            onClick={() => setIsAdminModalOpen(false)}
           >
-            {isAdminLoggedIn ? '🔒 إغلاق لوحة الإدارة (Close Admin)' : t.adminLogin}
-          </button>
-        </div>
-      </div>
+            <div
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                padding: '24px',
+                maxWidth: '420px',
+                width: '100%',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                borderTop: '4px solid #1a4d2e',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <div style={{ fontSize: '32px', marginBottom: '6px' }}>🔐</div>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: '#1a4d2e' }}>
+                  تسجيل دخول الإدارة
+                </h3>
+                <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                  Arresalah Center Berlin • Administration
+                </p>
+              </div>
 
-      {/* 2. واجهة المعاينة والطباعة Contract View */}
-      <div id="contract-view" className={`view-container ${activeTab === 'contract-view' ? 'block' : 'hidden'}`}>
-        <div className="print-actions no-print">
-          <button
-            type="button"
-            className="print-btn"
-            id="btn_print"
-            onClick={() => window.print()}
-          >
-            <span>🖨️</span>
-            <span>{t.printBtn}</span>
-          </button>
-        </div>
+              {adminPasswordError && (
+                <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '14px', textAlign: 'center' }}>
+                  {adminPasswordError}
+                </div>
+              )}
+
+              <form onSubmit={handleAdminLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                    كلمة مرور الإدارة (Passwort):
+                  </label>
+                  <input
+                    type="password"
+                    value={adminPasswordInput}
+                    onChange={(e) => setAdminPasswordInput(e.target.value)}
+                    placeholder="••••••••"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoFocus
+                    required
+                  />
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
+                    كلمة المرور الافتراضية: admin123 أو Arresalah2026
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="submit"
+                    style={{
+                      flex: 1,
+                      background: '#1a4d2e',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    دخول (Anmelden)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAdminModalOpen(false)}
+                    style={{
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      border: '1px solid #cbd5e1',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+      {/* 2. واجهة المعاينة والطباعة Contract View (حصرياً للإدارة بعد تسجيل الدخول) */}
+      {isAdminLoggedIn && (
+        <div id="contract-view" className={`view-container ${activeTab === 'contract-view' ? 'block' : 'hidden'}`}>
+          <div className="print-actions no-print">
+            <button
+              type="button"
+              className="print-btn"
+              id="btn_print"
+              onClick={() => window.print()}
+            >
+              <span>🖨️</span>
+              <span>{t.printBtn}</span>
+            </button>
+          </div>
 
         <div className="a4-page">
           <div className="contract-header">
@@ -947,11 +1133,11 @@ export default function App() {
           {/* الزوج والزوجة */}
           <div className="grid-2">
             <div className="section-box">
-              {parties.husband?.photoBase64 ? (
+              {(parties.husband?.photoBase64 || parties.husband?.idFrontBase64) ? (
                 <img
                   id="husband_photo"
                   className="profile-photo-box"
-                  src={parties.husband.photoBase64}
+                  src={parties.husband.photoBase64 || parties.husband.idFrontBase64}
                   alt="Husband"
                 />
               ) : (
@@ -987,11 +1173,11 @@ export default function App() {
             </div>
 
             <div className="section-box">
-              {parties.wife?.photoBase64 ? (
+              {(parties.wife?.photoBase64 || parties.wife?.idFrontBase64) ? (
                 <img
                   id="wife_photo"
                   className="profile-photo-box"
-                  src={parties.wife.photoBase64}
+                  src={parties.wife.photoBase64 || parties.wife.idFrontBase64}
                   alt="Wife"
                 />
               ) : (
@@ -1181,6 +1367,7 @@ export default function App() {
           )}
         </div>
       </div>
+      )}
       </>
       )}
     </div>
