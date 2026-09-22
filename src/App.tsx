@@ -341,7 +341,7 @@ export default function App() {
             </div>
             <div className="header-titles">
               <h1>ARRESALAH CENTER BERLIN e.V.</h1>
-              <p>مركز الرسالة الإسلامي برلين • عقد زواج إسلامي شرعي</p>
+              <p>{t.headerSubtitle}</p>
             </div>
           </div>
 
@@ -509,21 +509,18 @@ export default function App() {
         </div>
       )}
 
-      {/* شاشة الحجب والقفل (Gatekeeper Lockscreen) إذا لم يتم إدخال كود التأكيد */}
+      {/* شاشة الحجب والدخول بكود العقد */}
       {!isCodeVerified ? (
-        <div className="max-w-[550px] mx-auto px-4 py-8">
+        <div className="max-w-[500px] mx-auto px-4 py-12">
           <div className="bg-white rounded-2xl p-8 shadow-xl border-t-4 border-[#1a4d2e] text-center">
             <div className="w-16 h-16 bg-[#f1f6f3] border-2 border-[#1a4d2e] text-[#1a4d2e] rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-sm">
-              🔐
+              📜
             </div>
             <h2 className="text-xl font-extrabold text-[#1a4d2e] mb-2">
-              بوابة إدخال كود عقد الزواج
+              {t.gatekeeperTitle}
             </h2>
-            <p className="text-sm font-semibold text-[#b8860b] mb-1 font-sans">
-              Vertragszugang & Code-Verifizierung
-            </p>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              هذه الصفحة محجوبة تلقائياً لحماية خصوصية البيانات. يرجى إدخال كود العقد الممنوح لك من إدارة مركز الرسالة للمتابعة.
+              {t.gatekeeperDesc}
             </p>
 
             {alertMsg && (
@@ -547,7 +544,7 @@ export default function App() {
                   id="gatekeeperCodeInput"
                   value={contractCodeInput}
                   onChange={(e) => setContractCodeInput(e.target.value.toUpperCase())}
-                  placeholder="CTR-XXXXXX"
+                  placeholder={t.gatekeeperPlaceholder}
                   className="w-full text-center text-lg font-mono font-bold tracking-widest py-3 px-4 rounded-xl border-2 border-slate-300 focus:border-[#1a4d2e] focus:outline-none uppercase bg-slate-50 focus:bg-white transition-all shadow-inner"
                   required
                 />
@@ -555,15 +552,15 @@ export default function App() {
 
               <button
                 type="submit"
-                className="w-full bg-[#1a4d2e] hover:bg-[#25663f] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full bg-[#1a4d2e] hover:bg-[#25663f] text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>✓</span>
-                <span>تأكيد الكود والدخول (Bestätigen)</span>
+                <span>{t.gatekeeperBtn}</span>
               </button>
             </form>
 
             <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-400">
-              <span>Arresalah Center Berlin e.V. • Gerichtstraße 38, 13347 Berlin</span>
+              <span>{t.footerText}</span>
             </div>
           </div>
         </div>
@@ -577,7 +574,7 @@ export default function App() {
                   {t.formTitle}
                 </h2>
                 <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                  يرجى النقر على أي من الأطراف في الدائرة أدناه لإدخال بياناته ورفع صوره الشخصية ومستنداته
+                  {t.formInstruction}
                 </p>
               </div>
 
@@ -652,23 +649,23 @@ export default function App() {
                 <div className="circle-legend">
                   <div className="legend-item" onClick={() => setSelectedRole('husband')}>
                     <span className={`legend-dot ${parties.husband?.isCompleted ? 'active-dot' : ''}`} id="dot_husband" />
-                    <span id="lbl_leg_husband">{parties.husband?.isCompleted ? '✓ الزوج' : 'الزوج'}</span>
+                    <span id="lbl_leg_husband">{parties.husband?.isCompleted ? `✓ ${t.husband}` : t.husband}</span>
                   </div>
                   <div className="legend-item" onClick={() => setSelectedRole('wife')}>
                     <span className={`legend-dot ${parties.wife?.isCompleted ? 'active-dot' : ''}`} id="dot_wife" />
-                    <span id="lbl_leg_wife">{parties.wife?.isCompleted ? '✓ الزوجة' : 'الزوجة'}</span>
+                    <span id="lbl_leg_wife">{parties.wife?.isCompleted ? `✓ ${t.wife}` : t.wife}</span>
                   </div>
                   <div className="legend-item" onClick={() => setSelectedRole('guardian')}>
                     <span className={`legend-dot ${parties.guardian?.isCompleted ? 'active-dot' : ''}`} id="dot_waliy" />
-                    <span id="lbl_leg_waliy">{parties.guardian?.isCompleted ? '✓ الولي' : 'الولي'}</span>
+                    <span id="lbl_leg_waliy">{parties.guardian?.isCompleted ? `✓ ${t.waliy}` : t.waliy}</span>
                   </div>
                   <div className="legend-item" onClick={() => setSelectedRole('witness1')}>
                     <span className={`legend-dot ${parties.witness1?.isCompleted ? 'active-dot' : ''}`} id="dot_witness1" />
-                    <span id="lbl_leg_w1">{parties.witness1?.isCompleted ? '✓ شاهد 1' : 'شاهد 1'}</span>
+                    <span id="lbl_leg_w1">{parties.witness1?.isCompleted ? `✓ ${t.witness1}` : t.witness1}</span>
                   </div>
                   <div className="legend-item" onClick={() => setSelectedRole('witness2')}>
                     <span className={`legend-dot ${parties.witness2?.isCompleted ? 'active-dot' : ''}`} id="dot_witness2" />
-                    <span id="lbl_leg_w2">{parties.witness2?.isCompleted ? '✓ شاهد 2' : 'شاهد 2'}</span>
+                    <span id="lbl_leg_w2">{parties.witness2?.isCompleted ? `✓ ${t.witness2}` : t.witness2}</span>
                   </div>
                 </div>
               </div>
@@ -917,14 +914,14 @@ export default function App() {
                         />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>
-                            ✓ تم تحميل صورة الوجه الأمامي
+                            {t.frontUploaded}
                           </div>
                           <button
                             type="button"
                             onClick={() => setIdFrontBase64(undefined)}
                             style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '11px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
                           >
-                            إلغاء الصورة ✕
+                            {t.deletePhoto}
                           </button>
                         </div>
                       </div>
@@ -950,14 +947,14 @@ export default function App() {
                         />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 'bold' }}>
-                            ✓ تم تحميل صورة الوجه الخلفي
+                            {t.backUploaded}
                           </div>
                           <button
                             type="button"
                             onClick={() => setIdBackBase64(undefined)}
                             style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '11px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
                           >
-                            إلغاء الصورة ✕
+                            {t.deletePhoto}
                           </button>
                         </div>
                       </div>
@@ -980,8 +977,7 @@ export default function App() {
 
         {/* تذييل الصفحة الرسمي النظيف */}
         <footer style={{ textAlign: 'center', marginTop: '35px', padding: '16px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '11px' }}>
-          <div>Islamische Eheschließungsurkunde • Arresalah Center Berlin e.V.</div>
-          <div style={{ marginTop: '2px' }}>Gerichtstraße 38, 13347 Berlin • Alle Rechte vorbehalten</div>
+          <div>{t.footerText}</div>
         </footer>
 
         {/* نافذة تسجيل دخول الإدارة بكلمة المرور Admin Password Modal */}
